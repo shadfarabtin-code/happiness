@@ -3,8 +3,9 @@ from typing import *
 from dataclasses import dataclass
 import unittest
 import math
+from typing import Optional
 import sys
-from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
 
 #Accounts & Authroization
 #Two users: Seekers & Providers
@@ -19,23 +20,49 @@ class User:
     role : str
     is_verified : bool = False
 
+#Ignores anything passed 72 bytes of password,
+def hash_password(password : str)->str:
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt() #Salts the password
+    hashed = bcrypt.hashpw(password_bytes, salt) #Does the one-way hash
+    return hashed.decode('utf-8') #Returns the hashed password as a string
+
+#To check if the password matches the hashedpassword
+def password_matches( password : str , password_hash : str) ->bool:
+    return bcrypt.checkpw( password.encode("utf-8"), password_hash.encode("utf-8"))
+     
+
+
 #Holds all the users data & Handles registering
-class AccountManager: 
+class AccountManager:
+    #Holds all the users and registers 
     def __init__(self) -> None:
         self._users : dict[str, User] = {}
         self._next_id : int = 1
     
     #Creates a new account
-    def register( self, email : str, password_hash : str, role : str) -> User:
+    def register( self, email : str, password : str, role : str) -> User:
         email = email.lower().strip()
         if email in self._users:
             raise ValueError("Email already in use.")
         
-        user = User( id = self._next_id, email = email, password_hash = generate_password_hash (password_hash), role = role,)
+        user = User( id = self._next_id, email = email, password_hash = hash_password (password), role = role,)
         self._users[email] = user
         self._next_id += 1 
         return user
 
+    #Return user if email & password match, otherwise None
+    def authenticate( self, email : str, password : str) -> Optional[User]:
+        email = email.lower().strip()
+        user = self._users.get(email)
+        if user is None:
+            return None
+        if password_matches(password, user.password_hash):
+            return user
+        return None
+    
+    def get( self, email : str) -> Optional[User]:
+        return self._users.get(email.lower().strip())
 
 
 
@@ -48,6 +75,21 @@ class AccountManager:
 
 #Button System
 #Green for active, Red for offline, Yellow for active in the scheduled time
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #Chat Backend
@@ -88,11 +130,3 @@ class AccountManager:
 
 
 
-
-
-
-def main():
-    entries = load_entries("data.csv")
-    print(f"Average happiness: {average_score(entries):.2f}")
-if __name__ == "__main__":
-    main()
