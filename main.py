@@ -6,6 +6,8 @@ import math
 from typing import Optional
 import sys
 import bcrypt
+import enum
+
 
 #Accounts & Authroization
 #Two users: Seekers & Providers
@@ -24,6 +26,7 @@ class User:
 class Pendingverification:
     email : str
     expires_at : float
+
 #Ignores anything passed 72 bytes of password,
 def hash_password(password : str)->str:
     password_bytes = password.encode('utf-8')
@@ -104,10 +107,25 @@ class AccountManager:
 
 
 
-
-
 #Button System
 #Green for active, Red for offline, Yellow for active in the scheduled time
+ Online_timeout_seconds = 60
+
+#The UI will decide the color, this is just for the meaning of them
+ class Presense( enum.Enum):
+    Active = "active"
+    Scheduled = "scheduled"
+    Offline = "offline"
+
+#Matches a presence to a color for the UI
+def presence_color (state : Presense) -> str:
+    match state:
+        case Presense.Active:
+            return "green"
+        case Presense.Scheduled:
+            return "yellow"
+        case Presense.Offline:
+            return "red"
 
 
 
