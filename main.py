@@ -11,7 +11,6 @@ import bcrypt
 #Two users: Seekers & Providers
 #Providers: Name, Picture, Role, Company, Bio, What they can help with
 #Seekers: Name, Picture, University, Companies they want to target, what they need help with
-#Change this to one way hash
 @dataclass (frozen=True)
 class User:
     id : int
@@ -39,6 +38,7 @@ class AccountManager:
     def __init__(self) -> None:
         self._users : dict[str, User] = {}
         self._next_id : int = 1
+        self._pending_tokens : dict[str, str] = {}
     
     #Creates a new account
     def register( self, email : str, password : str, role : str) -> User:
@@ -60,10 +60,28 @@ class AccountManager:
         if password_matches(password, user.password_hash):
             return user
         return None
-    
+
+    #Proves that you own the inbox by creating a token
+    def create_verification_token( self, email : str) -> str:
+        email = email.lower().strip()
+        if email not in self._users:
+            raise ValueError("No such account")
+        token = secrets.token_urlsafe(32)
+        self._pending_tokens[token] = email
+        return token
+
+    #Verifies the token and marks the user as verified
+    def verify( self, token : str) -> bool:
+        email = self._pending_tokens.pop(token , None)
+        if email is None:
+            return False
+        old = self._users[email]
+        self._users[email] = replace(old, is_verified=True)
+        return True 
+        
+    #Returns the user for the given email if it exists
     def get( self, email : str) -> Optional[User]:
         return self._users.get(email.lower().strip())
-
 
 
 
@@ -123,9 +141,10 @@ class AccountManager:
 
 
 
-#Verification, via workemail, linkedin authroization, or mannual approval
+#Verification, via workemail, linkedin authroization (Later once we get the app), or manual approval
 #Verify badge next to users name
-
+#Verification via workemail 
+Free_email_domains = { "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "aol.com", "protonmail.com", "proton.me", "live.com", "msn.com","gmx.com", "yandex.com", "mail.com", "me.com",}
 
 
 
