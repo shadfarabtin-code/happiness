@@ -1,0 +1,58 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { setItem, getItem, deleteItem } from "@/services/storage";
+
+export type User = {
+    id: number;
+    email: string;
+    role: string;
+    is_verified: boolean;
+};
+
+type AuthContextType = {
+    user: User | null | undefined;
+    setUser: (user: User | null | undefined) => void;
+};
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+     // undefined means loading, null means no user, User means logged in
+    const [user, setUserState] = useState<User | null | undefined>(undefined);
+
+    // Function to get user from secure storage
+    async function getUser() {
+        let result = await getItem("user");
+        if (result) return JSON.parse(result);
+        else return null;
+    }
+
+    // Function to update BOTH in-memory state AND persisted storage
+    async function setUser(user: User | null | undefined) {
+        setUserState(user);
+        if (user) await setItem("user", JSON.stringify(user));
+        else await deleteItem("user"); // for logout
+    }
+
+    // Load persisted user on app start
+    useEffect(() => {
+        async function loadUser() {
+            getUser().then((storedUser) => {
+                setUserState(storedUser);
+            });
+        }
+
+        loadUser();
+    }, []);
+
+    return (
+        <AuthContext.Provider value={{ user, setUser }}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) throw new Error("useAuth must be used within AuthProvider");
+    return context;
+};

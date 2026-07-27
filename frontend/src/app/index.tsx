@@ -1,18 +1,15 @@
-import { Text, View, StyleSheet } from "react-native";
-import SignIn from "../pages/SignIn";
+import { useEffect } from "react";
+import { router } from "expo-router";
+import { useAuth } from "../services/authContext";
 
 export default function Index() {
-  return (
-    <View style={styles.container}>
-      <SignIn />
-    </View>
-  );
-}
+  const { user } = useAuth();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+  useEffect(() => {
+    if (user === undefined) console.log("Loading user from secure storage...");
+    else if (user === null) router.navigate("/login");
+    else router.navigate("/home");
+  }, [user]);
+
+  return null;
+}
