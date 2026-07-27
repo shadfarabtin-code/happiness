@@ -2,11 +2,10 @@ import time
 import secrets
 from dataclasses import replace
 from typing import Optional
-
 from models.user import User, PendingVerification
 from services.security import hash_password, password_matches, is_work_email
-
 token_ttl_seconds = 10 * 60
+
 
 #Provider is verified only if the role is provider, is_verified, & work email
 def is_verified_provider ( user : User) -> bool:
@@ -65,3 +64,50 @@ class AccountManager:
     #Returns the user for the given email if it exists
     def get( self, email : str) -> Optional[User]:
         return self._users.get(email.lower().strip())
+
+#Holds active login sessions, mapping a session token back to the email that owns it
+Session_TTL_Seconds = 24 * 60 * 60
+class SessionManager:
+    def __init__(self) -> None:
+        self._sessions : dict[str, str] = {}
+
+    #Starts a session for the given email & returns the token
+    def create_session(self, email : str) -> str:
+        token = secrets.token_urlsafe(32)
+        self._sessions[token] = Session(email.lower().strip(), time.time() + Session_TTL_Seconds)
+        return token
+
+    #Returns the email tied to a token, or None if the token is missing/unknown
+    def email_for(self, token : Optional[str]) -> Optional[str]:
+        if token is None:
+            return None
+        session = self._sessions.get(token)
+        if session is None:
+            return None
+        if time.time() > session.expires_at:
+            del self._sessions[token]
+            return None
+        return session.email
+
+    #Ends a session (e.g. on logout)
+    def end_session(self, token : str) -> None:
+        self._sessions.pop(token, None)
+
+accounts = AccountManager()
+sessions = SessionManager()
+
+#Pulls the token out of an "Authorization: Bearer <token>" header value
+def _token_from_request(authorization : Optional[str]) -> Optional[str]:
+    if authorization is None:
+        return None
+    prefix = "Bearer "
+    if authorization.startswith(prefix):
+        return authorization[len(prefix):]
+    return None
+
+#Resolves the logged in user from the Authorization header, returns user or None if the token is missing/bad/expired
+def current_user(authorization : Optional[str]) -> Optional[User]:
+    email = sessions.email_for(_token_from_request(authorization))
+    if email is None:
+        return None
+    return accounts.get(email)

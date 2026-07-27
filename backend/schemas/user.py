@@ -17,3 +17,7 @@ class UserOut(BaseModel):
     email: str
     role: str
     is_verified: bool
+
+class LoginResponse(BaseModel):
+    token: str
+    user: UserOut

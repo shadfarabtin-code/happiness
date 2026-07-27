@@ -6,7 +6,7 @@ ONLINE_TIMEOUT_SECONDS = 60
 class Presense( enum.Enum):
     Active = "active"
     Scheduled = "scheduled"
-    Offline = "offline"
+    Offline = "offline" 
 
 #THIS IS UNNEEDED BECAUSE REACT WILL HANDLE IT, BUT I LEFT IT HERE FOR REFERENCE
 def presence_color (state : Presense) -> str:
@@ -17,3 +17,5 @@ def presence_color (state : Presense) -> str:
             return "yellow"
         case Presense.Offline:
             return "red"
+
+#Code for the heart beat, every 30 seconds
