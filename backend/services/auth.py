@@ -18,7 +18,7 @@ class AccountManager:
     def __init__(self) -> None:
         self._users : dict[str, User] = {}
         self._next_id : int = 1
-        self._pending_tokens : dict[str, str] = {}
+        self._pending_tokens : dict[str, PendingVerification] = {}
     
     #Creates a new account
     def register( self, email : str, password : str, role : str) -> User:
