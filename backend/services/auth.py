@@ -13,6 +13,12 @@ token_ttl_seconds = 10 * 60
 def is_verified_provider ( user : User) -> bool:
     return user.role == "provider" and user.is_verified and is_work_email(user.email)
 
+
+
+
+
+
+
 #Holds all the users data & Handles registering
 class AccountManager:
     #Holds all the users and registers 
@@ -71,6 +77,16 @@ class AccountManager:
     #Returns the user for the given email if it exists
     def get( self, email : str) -> Optional[User]:
         return self._users.get(email.lower().strip())
+
+
+
+
+
+
+
+
+
+
 
 #Holds active login sessions, mapping a session token back to the email that owns it
 #Make sures an "app already exists" crash doesn't happen
