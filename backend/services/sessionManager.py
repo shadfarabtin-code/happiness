@@ -9,7 +9,7 @@ Session_TTL_Seconds = 24 * 60 * 60
 #Collects the sessions of the clients from firestore
 class SessionManager:
     def __init__(self) -> None:
-        self._sessions = db.collections("sessions")
+        self._sessions = db.collection("sessions")
 
     #Starts a session for the given email & returns the token
     def create_session(self, email : str) -> str:
