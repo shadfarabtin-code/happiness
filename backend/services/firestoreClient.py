@@ -1,8 +1,9 @@
 from google.cloud import firestore
+
+database = firestore.Client(project="happiness-db")
+
 from services.accountManager import AccountManager
 from services.sessionManager import SessionManager
 
-
-database = firestore.Client(project="happiness-db")
 accounts = AccountManager()
 sessions = SessionManager()
