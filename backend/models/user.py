@@ -13,8 +13,3 @@ class User:
 class PendingVerification:
     email : str
     expires_at : float
-
-@dataclass (frozen=True)
-class Session:
-    email : str
-    expires_at : float

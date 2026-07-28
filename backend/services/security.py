@@ -1,4 +1,5 @@
 import bcrypt
+from models.user import User
 from free_email_domains import whitelist as Free_Email_Domains
 
 #Ignores anything passed 72 bytes of password,
@@ -16,3 +17,7 @@ def password_matches( password : str , password_hash : str) ->bool:
 def is_work_email ( email : str) -> bool:
     domain = email.split("@")[-1].lower().strip()
     return domain not in Free_Email_Domains
+
+#Provider is verified only if the role is provider, is_verified, & work email
+def is_verified_provider ( user : User) -> bool:
+    return user.role == "provider" and user.is_verified and is_work_email(user.email)
