@@ -74,7 +74,14 @@ const Register = () => {
       const response = await fetch("https://backend-995991413043.us-west1.run.app/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({ 
+          email: email, 
+          password: password, 
+          first_name: firstName, 
+          last_name: lastName, 
+          role: role, 
+          company_name: role === "provider" ? companyName : null, 
+        }),
       });
 
       if (!response.ok) {
