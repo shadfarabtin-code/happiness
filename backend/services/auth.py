@@ -4,6 +4,8 @@ from dataclasses import replace
 from typing import Optional
 from models.user import User, PendingVerification
 from services.security import hash_password, password_matches, is_work_email
+import firebase_admin
+from firebase_admin import firestore
 token_ttl_seconds = 10 * 60
 
 
@@ -15,25 +17,30 @@ def is_verified_provider ( user : User) -> bool:
 class AccountManager:
     #Holds all the users and registers 
     def __init__(self) -> None:
-        self._users : dict[str, User] = {}
-        self._next_id : int = 1
-        self._pending_tokens : dict[str, PendingVerification] = {}
+        self._users = firestore.client().collection("users")
+        self._tokens = firestore.client().collection( "verification_tokens")
     
-    #Creates a new account
+    #Creates a new account, gives the user an unique id in strings 
     def register( self, email : str, password : str, role : str) -> User:
         email = email.lower().strip()
-        if email in self._users:
-            raise ValueError("Email already in use.")
-        
-        user = User( id = self._next_id, email = email, password_hash = hash_password (password), role = role,)
-        self._users[email] = user
-        self._next_id += 1 
+        if self._users.document(email).get().exists:
+            raise ValueError( "Email already in use.")
+        user = User ( id = uuid.uuid4().hex, email = email, password_hash = hash_password(password), role = role)
+        self._users.document(email).set({"id" : user.id , "email" : user.email, "password_hash" : user.password_hash, "role" : user.role, "is_verified" : user. is_verified})
         return user
+
+    def _user_from_doc(self, doc) -> Optional[User]:
+        if not doc.exists:
+            return None
+        d = doc.to_dict()
+        return User(d["id"], d["email"], d["password_hash"], d["role"], d["is_verified"])
+
+    def get(self, email : str) -> Optional[User]:
+        return self._user_from_doc(self._users.document(email.lower().strip()).get())
 
     #Return user if email & password match, otherwise None
     def authenticate( self, email : str, password : str) -> Optional[User]:
-        email = email.lower().strip()
-        user = self._users.get(email)
+        user = self.get(email)
         if user is None:
             return None
         if password_matches(password, user.password_hash):
@@ -66,32 +73,39 @@ class AccountManager:
         return self._users.get(email.lower().strip())
 
 #Holds active login sessions, mapping a session token back to the email that owns it
+#Make sures an "app already exists" crash doesn't happen
+if not firebase_admin._apps:
+    firebase_admin.initialize_app()
+
 Session_TTL_Seconds = 24 * 60 * 60
+
+#Collects the sessions of the clients from firestore
 class SessionManager:
     def __init__(self) -> None:
-        self._sessions : dict[str, str] = {}
+        self._sessions = firestore.client().collections("sessions")
 
     #Starts a session for the given email & returns the token
     def create_session(self, email : str) -> str:
         token = secrets.token_urlsafe(32)
-        self._sessions[token] = Session(email.lower().strip(), time.time() + Session_TTL_Seconds)
+        self._sessions.document(token).set({"email" : email.lower().strip(), "expires_at" : time.time() + Session_TTL_Seconds,})
         return token
 
-    #Returns the email tied to a token, or None if the token is missing/unknown
+    #Returns the email tied to a token, or None if the token is missing/unknownpython3 filename.py
     def email_for(self, token : Optional[str]) -> Optional[str]:
         if token is None:
             return None
-        session = self._sessions.get(token)
-        if session is None:
+        doc = self._sessions.document(token).get()
+        if not doc.exists:
             return None
-        if time.time() > session.expires_at:
-            del self._sessions[token]
+        data = doc.to_dict()
+        if time.time > data["expires_at"]:
+            self._sessions.document(token).delete()
             return None
-        return session.email
+        return data["email"]
 
     #Ends a session (e.g. on logout)
     def end_session(self, token : str) -> None:
-        self._sessions.pop(token, None)
+        self._sessions.document(token).delete()
 
 accounts = AccountManager()
 sessions = SessionManager()
@@ -111,3 +125,4 @@ def current_user(authorization : Optional[str]) -> Optional[User]:
     if email is None:
         return None
     return accounts.get(email)
+
