@@ -1,23 +1,25 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
-
+import { useEffect, useState, useLayoutEffect } from "react";
+import { router, useNavigation } from "expo-router";
 import { useAuth } from "@/services/authContext";
 
 import { Input, Button } from "@rneui/themed";
 import { CenteredView, Card } from "@/components/Views";
-import { CardHeading, ErrorText, HyperlinkText } from "@/components/Text";
-import { DropdownComponent } from "@/components/Dropdown";
-
-const router = useRouter();
+import { Heading, ErrorText, HyperlinkText } from "@/components/Text";
+import { TextDropdown } from "@/components/Dropdown";
 
 const Register = () => {
-  const { user, setUser } = useAuth();
+  const navigation = useNavigation()
+  const { user, token, setAuth } = useAuth();
   
   useEffect(() => {
-    if (user) {
-      router.navigate("/home");
-    }
+    if (user) router.replace("/home");
   }, [user]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: "Register",
+    });
+  }, [navigation]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,21 +44,23 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch("https://backend-995991413043.us-west1.run.app:8000/register", {
+      const response = await fetch("https://backend-995991413043.us-west1.run.app/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, role }),
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error("Registration failed:", response.status, errorData);
         setError("Registration failed. Check your input.");
         return;
       }
 
-      const user = await response.json();
-      setUser(user);
+      const { user, token } = await response.json();
+      setAuth(user, token);
       console.log(user);
-      router.navigate("/home");
+      router.replace("/home");
 
       
 
@@ -69,7 +73,7 @@ const Register = () => {
   return (
     <CenteredView>
       <Card width={0.9}>
-        <CardHeading>Welcome to Happiness!</CardHeading>
+        <Heading>Welcome to Happiness!</Heading>
 
         <Input
           placeholder="Email Address"
@@ -93,16 +97,16 @@ const Register = () => {
           onChangeText={setConfirmPassword}
         />
 
-        <DropdownComponent 
+        <TextDropdown 
           data={[{ label: "Seeker", value: "seeker" },
                 { label: "Provider", value: "provider" }]} 
           value={role}
           onChangeValue={setRole}>
-        </DropdownComponent>
+        </TextDropdown>
 
         <Button title="Register" onPress={handleRegister} />
 
-        <HyperlinkText onPress={() => router.navigate("/login")}>
+        <HyperlinkText onPress={() => router.replace("/login")}>
           Already have an account? Sign in
         </HyperlinkText>
 
