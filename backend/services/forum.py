@@ -1,14 +1,14 @@
 import time
 import uuid
 from typing import Optional
-from firebase_admin import firestore
+from services.firestoreClient import database as db
 from google.cloud.firestore_v1.base_query import FieldFilter
 from models.thread import Thread
 
 #Creates the thread & reads it back from firestore
 class ForumManager:
     def __init__(self) -> None:
-        self._threads = firestore.client().collection( "threads")
+        self._threads = db.collection( "threads")
 
     #Builds a new topic, saves it to firestore & then returns it
     def create_thread( self, title : str , tags : list[str], author_email : str ) -> Thread:
