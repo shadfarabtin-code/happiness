@@ -21,28 +21,55 @@ const Register = () => {
     });
   }, [navigation]);
 
+  const [step, setStep] = useState(1);
+
+  //Step 1
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  //Step 2
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [role, setRole] = useState("");
+
+  // Step 3 (only if role === "provider")
+  const [companyName, setCompanyName] = useState("");
+
   const [error, setError] = useState("");
+  const isLastStep = step === 3 || (step === 2 && role !== "provider");
+
+  function handleNext() {
+    if (step === 1) {
+      if (!email || !password || !confirmPassword) {
+        setError("Please fill in all fields.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords don't match.");
+        return;
+      }
+      setStep(2);
+    } else if (step === 2) {
+      if (role !== "seeker" && role !== "provider") {
+        setError("Please select a valid role.");
+        return;
+      }
+      if (role === "provider") {
+        setStep(3);
+      } else {
+        handleRegister(); // seekers skip step 3 entirely
+      }
+    } else if (step === 3) {
+      handleRegister();
+    }
+  }
+
+  function handleBack() {
+    setStep((s) => Math.max(1, s - 1));
+  }
 
   async function handleRegister() {
-    if (!email || !password || !confirmPassword || !role) {
-      setError("Please fill in all fields.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    if (role !== "seeker" && role !== "provider") {
-      setError("Please select a valid role.");
-      return;
-    }
-
     try {
       const response = await fetch("https://backend-995991413043.us-west1.run.app/register", {
         method: "POST",
@@ -73,42 +100,38 @@ const Register = () => {
   return (
     <CenteredView>
       <Card width={0.9}>
-        <Heading>Welcome to Happiness!</Heading>
+        {step === 1 && (
+          <>
+            <Heading>Welcome to Happiness!</Heading>
+            <Input placeholder="Email Address" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+            <Input placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+            <Input placeholder="Confirm Password" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
+          </>
+        )}  
 
-        <Input
-          placeholder="Email Address"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
+        {step === 2 && (
+          <>
+          <Input placeholder="First Name" value={firstName} onChangeText={setFirstName} />
+          <Input placeholder="Last Name" value={lastName} onChangeText={setLastName} />
+          <TextDropdown 
+            data={[{ label: "Seeker", value: "seeker" },
+                  { label: "Provider", value: "provider" }]} 
+            value={role}
+            onChangeValue={setRole}>
+          </TextDropdown>
+          </>
+        )}
 
-        <Input
-          placeholder="Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+        {step === 3 && (
+          <Input placeholder="Company Name" value={companyName} onChangeText={setCompanyName} />
+        )}
+        
+        <Button title={isLastStep ? "Register" : "Next"} onPress={handleNext} />
+        {step > 1 && <Button title="Back" type="outline" onPress={handleBack} />}
 
-        <Input
-          placeholder="Confirm Password"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-
-        <TextDropdown 
-          data={[{ label: "Seeker", value: "seeker" },
-                { label: "Provider", value: "provider" }]} 
-          value={role}
-          onChangeValue={setRole}>
-        </TextDropdown>
-
-        <Button title="Register" onPress={handleRegister} />
-
-        <HyperlinkText onPress={() => router.replace("/login")}>
+        {step === 1 && <HyperlinkText onPress={() => router.replace("/login")}>
           Already have an account? Sign in
-        </HyperlinkText>
+        </HyperlinkText>}
 
         {error ? <ErrorText>{error}</ErrorText> : null}
       </Card>
