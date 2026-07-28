@@ -4,8 +4,11 @@ from dataclasses import dataclass
 class User:
     id : str
     email : str
+    first_name : str
+    last_name : str
     password_hash : str
     role : str
+    company_name : str | None = None
     is_verified : bool = False
 
 

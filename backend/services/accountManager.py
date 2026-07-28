@@ -1,7 +1,7 @@
 import time
 import secrets
 import uuid
-from dataclasses import replace
+from dataclasses import replace, asdict
 from typing import Optional
 
 from services.firestoreClient import database as db
@@ -18,12 +18,20 @@ class AccountManager:
         self._tokens = db.collection( "verification_tokens")
     
     #Creates a new account, gives the user an unique id in strings 
-    def register( self, email : str, password : str, role : str) -> User:
+    def register(self, email : str, password : str, first_name : str, last_name : str, role : str, company_name : str = None) -> User:
         email = email.lower().strip()
         if self._users.document(email).get().exists:
             raise ValueError( "Email already in use.")
-        user = User ( id = uuid.uuid4().hex, email = email, password_hash = hash_password(password), role = role)
-        self._users.document(email).set({"id" : user.id , "email" : user.email, "password_hash" : user.password_hash, "role" : user.role, "is_verified" : user. is_verified})
+        user = User(
+            id = uuid.uuid4().hex, 
+            email = email,
+            password_hash = hash_password(password), 
+            first_name = first_name,
+            last_name = last_name,
+            role = role,
+            company_name = company_name
+        )
+        self._users.document(email).set(asdict(user))
         return user
 
     def _user_from_doc(self, doc) -> Optional[User]:

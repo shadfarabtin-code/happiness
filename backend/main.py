@@ -19,7 +19,7 @@ app.add_middleware(
 @app.post("/register", response_model=LoginResponse)
 def register(payload: RegisterRequest):
     try:
-        user: User = accounts.register(payload.email, payload.password, payload.role)
+        user: User = accounts.register(payload.email, payload.password, payload.first_name, payload.last_name, payload.role, payload.company_name)
         token: str = sessions.create_session(user.email)    
     except ValueError as e:
         raise HTTPException(400, str(e))
