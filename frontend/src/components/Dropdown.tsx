@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { useTheme } from "@rneui/themed";
 
+
 type DropdownComponentProps = {
-  data: { label: string; value: string }[];
-  value: string
-  onChangeValue: (string: string) => void;
+    data: { label: string; value: string }[];
+    value: string
+    onChangeValue: (value: string) => void;
 };
 
-export const DropdownComponent = ({ data, value, onChangeValue }: DropdownComponentProps) => {
+export const TextDropdown = ({ data, value, onChangeValue }: DropdownComponentProps) => {
     const { theme } = useTheme()
 
     return (

@@ -10,7 +10,8 @@ export type User = {
 
 type AuthContextType = {
     user: User | null | undefined;
-    setUser: (user: User | null | undefined) => void;
+    token: string | null;
+    setAuth: (user: User | null | undefined, token: string | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
      // undefined means loading, null means no user, User means logged in
     const [user, setUserState] = useState<User | null | undefined>(undefined);
+    const [token, setTokenState] = useState<string | null>(null);
 
     // Function to get user from secure storage
     async function getUser() {
@@ -27,8 +29,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     // Function to update BOTH in-memory state AND persisted storage
-    async function setUser(user: User | null | undefined) {
+    async function setAuth(user: User | null | undefined, token: string | null) {
         setUserState(user);
+        setTokenState(token);
         if (user) await setItem("user", JSON.stringify(user));
         else await deleteItem("user"); // for logout
     }
@@ -45,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, setUser }}>
+        <AuthContext.Provider value={{ user, token, setAuth }}>
             {children}
         </AuthContext.Provider>
     );

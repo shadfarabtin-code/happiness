@@ -7,8 +7,8 @@ export default function Index() {
 
   useEffect(() => {
     if (user === undefined) console.log("Loading user from secure storage...");
-    else if (user === null) router.navigate("/login");
-    else router.navigate("/home");
+    else if (user === null) router.replace("/login");
+    else router.replace("/home");
   }, [user]);
 
   return null;
