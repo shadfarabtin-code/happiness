@@ -13,7 +13,7 @@ class LoginRequest(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: int
+    id: str
     email: str
     role: str
     is_verified: bool
