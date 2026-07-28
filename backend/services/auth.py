@@ -123,8 +123,6 @@ class SessionManager:
     def end_session(self, token : str) -> None:
         self._sessions.document(token).delete()
 
-accounts = AccountManager()
-sessions = SessionManager()
 
 #Pulls the token out of an "Authorization: Bearer <token>" header value
 def _token_from_request(authorization : Optional[str]) -> Optional[str]:
