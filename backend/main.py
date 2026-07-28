@@ -1,8 +1,7 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
-from services.accountManager import AccountManager
-from services.sessionManager import SessionManager
+from services.firestoreClient import accounts, sessions
 from schemas.user import RegisterRequest, LoginRequest, LoginResponse
 from models.user import User
 
@@ -17,13 +16,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-manager = AccountManager()
-sessions = SessionManager()
-
 @app.post("/register", response_model=LoginResponse)
 def register(payload: RegisterRequest):
     try:
-        user: User = manager.register(payload.email, payload.password, payload.role)
+        user: User = accounts.register(payload.email, payload.password, payload.role)
         token: str = sessions.create_session(user.email)    
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -31,7 +27,7 @@ def register(payload: RegisterRequest):
 
 @app.post("/login", response_model=LoginResponse)
 def login(payload: LoginRequest):
-    user: User = manager.authenticate(payload.email, payload.password)
+    user: User = accounts.authenticate(payload.email, payload.password)
     if not user:
         raise HTTPException(401, "Invalid email or password")
     token: str = sessions.create_session(user.email)      

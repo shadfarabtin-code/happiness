@@ -1,6 +1,6 @@
 from typing import Optional
 from models.user import User
-from google.cloud import firestore
+from firestoreClient import accounts, sessions
 
 
 
@@ -15,9 +15,8 @@ def _token_from_request(authorization : Optional[str]) -> Optional[str]:
 
 #Resolves the logged in user from the Authorization header, returns user or None if the token is missing/bad/expired
 
-#IMPLEMENT FIRESTORE THIS DOES NOT WORK
 def current_user(authorization : Optional[str]) -> Optional[User]:
     email = sessions.email_for(_token_from_request(authorization))
     if email is None:
         return None
-    return accounts.get(email)
+    return accounts._get(email)
