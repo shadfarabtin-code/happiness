@@ -2,9 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { setItem, getItem, deleteItem } from "@/services/storage";
 
 export type User = {
-    id: number;
+    id: string;
     email: string;
+    first_name: string;
+    last_name: string;
     role: string;
+    company_name: string | null;
     is_verified: boolean;
 };
 
@@ -34,6 +37,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTokenState(token);
         if (user) await setItem("user", JSON.stringify(user));
         else await deleteItem("user"); // for logout
+        if (user) await setItem("token", JSON.stringify(token));
+        else await deleteItem("token"); // for logout
     }
 
     // Load persisted user on app start
@@ -43,7 +48,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUserState(storedUser);
             });
         }
-
         loadUser();
     }, []);
 
