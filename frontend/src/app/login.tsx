@@ -1,22 +1,24 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
-
-import { useAuth } from "@/services/authContext";
-
 import { Input, Button } from "@rneui/themed";
 import { CenteredView, Card } from "@/components/Views";
-import { CardHeading, ErrorText, HyperlinkText } from "@/components/Text";
+import { Heading, ErrorText, HyperlinkText } from "@/components/Text";
 
-const router = useRouter();
+import { useEffect, useState, useLayoutEffect } from "react";
+import { router, useNavigation } from "expo-router";
+import { useAuth } from "@/services/authContext";
 
 const Login = () => {
-  const { user, setUser } = useAuth();
+  const navigation = useNavigation();
+  const { user, token, setAuth } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      router.navigate("/home");
-    }
+    if (user) router.replace("/home");
   }, [user]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: "Log In",
+    });
+  }, [navigation]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,22 +31,23 @@ const Login = () => {
     }
 
     try {
-      const response = await fetch("https://backend-995991413043.us-west1.run.app:8080/login", {
+      const response = await fetch("https://backend-995991413043.us-west1.run.app/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
-        console.error("Login failed", response.statusText);
+        const errorData = await response.json().catch(() => null);
+        console.error("Login failed", response.status, errorData);
         setError("Login failed. Check your email and password.");
         return;
       }
 
-      const user = await response.json();
-      setUser(user);
+      const { token, user } = await response.json();
+      setAuth(user, token);
       console.log(user);
-      router.navigate("/home");
+      router.replace("/home");
 
 
     } catch (err) {
@@ -56,7 +59,7 @@ const Login = () => {
   return (
     <CenteredView>
       <Card width={0.9}>
-        <CardHeading>Welcome back!</CardHeading>
+        <Heading>Welcome back!</Heading>
 
         <Input
           placeholder="Email Address"
@@ -75,7 +78,7 @@ const Login = () => {
 
         <Button title="Login" onPress={handleLogin} />
 
-        <HyperlinkText onPress={() => router.navigate("/register")}>
+        <HyperlinkText onPress={() => router.replace("/register")}>
           Don't have an account? Register
         </HyperlinkText>
 

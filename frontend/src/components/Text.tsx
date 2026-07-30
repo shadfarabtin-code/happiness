@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { Text, Pressable } from "react-native";
 import { useTheme } from "@rneui/themed";
 
-export const CardHeading = ({ children }: { children: React.ReactNode }) => {
+export const Heading = ({ children }: { children: React.ReactNode }) => {
     return (
         <Text style={{
             fontSize: 40,

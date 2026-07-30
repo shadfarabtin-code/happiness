@@ -3,6 +3,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, createTheme } from "@rneui/themed";
 import { AuthProvider } from "@/services/authContext";
 
+import { Button } from "@rneui/base";
+
 const theme = createTheme({
   lightColors: {
     primary: '#e7e7e8',
@@ -13,6 +15,12 @@ const theme = createTheme({
     secondary: '#4a6a87',
   },
   components: {
+    Avatar: (props, theme) => ({
+      containerStyle: {
+        backgroundColor: theme.colors?.grey4,
+        margin: 10
+      }
+    }),
     Button: (props, theme) => ({
       buttonStyle: {
         backgroundColor: theme.colors?.secondary,
@@ -32,7 +40,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <ThemeProvider theme={theme}>
-          <Stack screenOptions={{ headerShown: false, }} />
+          <Stack />
         </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>
