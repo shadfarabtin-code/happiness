@@ -13,6 +13,7 @@ class SessionManager:
 
     #Starts a session for the given email & returns the token
     def create_session(self, email : str) -> str:
+        self._delete_expired_for_user(email)
         token = secrets.token_urlsafe(32)
         self._sessions.document(token).set({"email" : email.lower().strip(), "expires_at" : time.time() + Session_TTL_Seconds,})
         return token
@@ -33,3 +34,15 @@ class SessionManager:
     #Ends a session (e.g. on logout)
     def end_session(self, token : str) -> None:
         self._sessions.document(token).delete()
+
+    def _delete_expired_for_user(self, email: str) -> None:
+        now = time.time()
+        expired = self._sessions.where("email", "==", email.lower().strip()).where("expires_at", "<", now).stream()
+        for doc in expired:
+            doc.reference.delete()
+
+    def delete_expired_sessions(self) -> None:
+        now = time.time()
+        expired = self._sessions.where("expires_at", "<", now).stream()
+        for doc in expired:
+            doc.reference.delete()

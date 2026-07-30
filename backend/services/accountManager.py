@@ -38,7 +38,16 @@ class AccountManager:
         if not doc.exists:
             return None
         d = doc.to_dict()
-        return User(d["id"], d["email"], d["password_hash"], d["role"], d["is_verified"])
+        return User(
+                    d["id"], 
+                    d["email"], 
+                    d["first_name"],
+                    d["last_name"],
+                    d["password_hash"], 
+                    d["role"], 
+                    d["company_name"],
+                    d["is_verified"],
+                )
 
     def _get(self, email : str) -> Optional[User]:
         return self._user_from_doc(self._users.document(email.lower().strip()).get())
