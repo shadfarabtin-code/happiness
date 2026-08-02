@@ -3,8 +3,11 @@ import { Text, Pressable } from "react-native";
 import { useTheme } from "@rneui/themed";
 
 export const Heading = ({ children }: { children: React.ReactNode }) => {
+    const { theme } = useTheme()
+    
     return (
         <Text style={{
+            color: theme.colors?.text,
             fontSize: 40,
             fontWeight: "bold",
             alignSelf: "flex-start",
@@ -32,7 +35,7 @@ export const HyperlinkText = ({ children, onPress }: { children: React.ReactNode
         <Pressable>
             {({ hovered }) => (
                 <Text style={{
-                    color: theme.colors?.secondary,
+                    color: theme.colors?.link,
                     textDecorationLine: hovered ? "underline" : "none",
                 }}
                     onPress={onPress}

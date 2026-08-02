@@ -9,15 +9,14 @@ export const Card = ({ children, width }: { children: React.ReactNode, width: nu
 
     return (
         <View style={{
+            backgroundColor: theme.colors?.primary,
             width: windowWidth * width,
             maxWidth: 600,
             padding: 24,
-            borderWidth: 1,
-            borderColor: theme.colors?.grey5,
             borderRadius: 8,
             gap: 16,
-            shadowColor: "#000",
-            shadowOpacity: 0.1,
+            shadowColor: "black",
+            shadowOpacity: 0.2,
             shadowRadius: 10,
             elevation: 8,
         }}>
@@ -27,8 +26,11 @@ export const Card = ({ children, width }: { children: React.ReactNode, width: nu
 };
 
 export const CenteredView = ({ children }: { children: React.ReactNode }) => {
+    const { theme } = useTheme()
+
     return (
         <View style={{
+            backgroundColor: theme.colors?.background,
             flex: 1,
             justifyContent: "center",
             alignItems: "center"

@@ -1,27 +1,23 @@
-import { Input, Button } from "@rneui/themed";
+import { Input } from "@rneui/themed";
+import { SelectionButton } from "@/components/Buttons";
 import { CenteredView, Card } from "@/components/Views";
 import { Heading, ErrorText, HyperlinkText } from "@/components/Text";
 
-import { useEffect, useState, useLayoutEffect } from "react";
-import { router, useNavigation } from "expo-router";
+import { useEffect, useState } from "react";
+import { router } from "expo-router";
 import { useAuth } from "@/services/authContext";
 
 const Login = () => {
-  const navigation = useNavigation();
-  const { user, token, setAuth } = useAuth();
+  const { user, setAuth } = useAuth();
 
   useEffect(() => {
     if (user) router.replace("/home");
-  }, [user]);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      title: "Log In",
-    });
-  }, [navigation]);
+  }, [user]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
 
   async function handleLogin() {
@@ -76,7 +72,7 @@ const Login = () => {
           onChangeText={setPassword}
         />
 
-        <Button title="Login" onPress={handleLogin} />
+        <SelectionButton title="Login" onPress={handleLogin} />
 
         <HyperlinkText onPress={() => router.replace("/register")}>
           Don't have an account? Register

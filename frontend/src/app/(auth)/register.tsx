@@ -2,7 +2,8 @@ import { useEffect, useState, useLayoutEffect } from "react";
 import { router, useNavigation } from "expo-router";
 import { useAuth } from "@/services/authContext";
 
-import { Input, Button } from "@rneui/themed";
+import { Input } from "@rneui/themed";
+import { SelectionButton } from "@/components/Buttons";
 import { CenteredView, Card } from "@/components/Views";
 import { Heading, ErrorText, HyperlinkText } from "@/components/Text";
 import { TextDropdown } from "@/components/Dropdown";
@@ -133,8 +134,8 @@ const Register = () => {
           <Input placeholder="Company Name" value={companyName} onChangeText={setCompanyName} />
         )}
         
-        <Button title={isLastStep ? "Register" : "Next"} onPress={handleNext} />
-        {step > 1 && <Button title="Back" type="outline" onPress={handleBack} />}
+        <SelectionButton title={isLastStep ? "Register" : "Next"} onPress={handleNext} />
+        {step > 1 && <SelectionButton title="Back" onPress={handleBack} />}
 
         {step === 1 && <HyperlinkText onPress={() => router.replace("/login")}>
           Already have an account? Sign in

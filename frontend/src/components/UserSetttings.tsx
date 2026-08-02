@@ -1,14 +1,15 @@
-import { CenteredView } from "@/components/Views";
-import { View } from "react-native"
-import { Button, Avatar, Overlay, ListItem } from "@rneui/themed";
-
-import { useLayoutEffect, useState } from "react";
-import { router, useNavigation } from "expo-router";
 import { useAuth } from "@/services/authContext";
+import { useState } from "react";
+import { router } from "expo-router";
 
-const UserSettings = () => {
-    const [ active, isActive ] = useState(false);
+import { View } from "react-native";
+import { Avatar, ListItem, Overlay, useTheme } from "@rneui/themed";
+import { OptionButton } from "@/components/Buttons";
+
+export const UserSettings = () => {
+    const [active, isActive] = useState(false);
     const { user, setAuth } = useAuth();
+    const { theme } = useTheme();
 
     async function handleLogout() {
         setAuth(null, null);
@@ -17,9 +18,9 @@ const UserSettings = () => {
 
     return (
         <>
-            <Avatar avatarStyle={{marginRight: 10}}
+            <Avatar containerStyle={{ margin: 10 }}
                 rounded
-                size="medium"
+                size="small"
                 icon={{ name: "person", type: "material" }}
                 onPress={() => user ? isActive(true) : router.replace("/login")}
             />
@@ -28,48 +29,31 @@ const UserSettings = () => {
                 onBackdropPress={() => isActive(false)}
                 backdropStyle={{ backgroundColor: "transparent" }}
                 overlayStyle={{
+                    borderRadius: 15,
+                    backgroundColor: theme.colors.primary,
                     position: "absolute",
-                    top: 65,
+                    top: 50,
                     right: 15,
                     margin: 0,
-                    width: 250,
+                    width: 200,
                 }}
             >
-                <View style={{flexDirection:"row"}}>
-                    <Avatar avatarStyle={{justifyContent:"flex-start"}}
+                <View style={{ flexDirection: "row" }}>
+                    <Avatar containerStyle={{ margin: 0 }}
                         rounded
                         size="medium"
                         icon={{ name: "person", type: "material" }}
                         onPress={() => isActive(true)}
                     />
-                    <ListItem>
+                    <ListItem containerStyle={{ paddingTop: 5, backgroundColor: "transparent" }}>
                         <ListItem.Content>
-                            <ListItem.Title>{user?.first_name + " " + user?.last_name}</ListItem.Title>
+                            <ListItem.Title style={{ marginBottom: 5 }}>{user?.first_name + " " + user?.last_name}</ListItem.Title>
                             <ListItem.Subtitle>{user?.company_name}</ListItem.Subtitle>
                         </ListItem.Content>
                     </ListItem>
                 </View>
-                <Button onPress={() => handleLogout()}>Log Out</Button>
+                <OptionButton title="Log Out" onPress={() => handleLogout()} />
             </Overlay>
         </>
     );
 };
-
-const Home = () => {
-    const navigation = useNavigation();
-
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            title: "Home",
-            headerRight: () => <UserSettings/>
-        });
-    }, [navigation]);
-
-    return (
-        <CenteredView>
-            <></>
-        </CenteredView>
-    );
-};
-
-export default Home;
