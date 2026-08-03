@@ -1,10 +1,12 @@
 import time
 import uuid
 from typing import Optional
-from firebase_admin import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 from models.thread import Thread
 from services.firestoreClient import database as db
+from models.message import Message
+from models.notification import Notifications
+
 
 #Creates the thread & reads it back from firestore
 class ForumManager:
@@ -16,7 +18,7 @@ class ForumManager:
     def create_thread( self, title : str , tags : list[str], author_email : str ) -> Thread:
         thread = Thread ( id = uuid.uuid4().hex, title = title.strip(), tags = [t.lower().strip() for t in tags], author_email = author_email.lower().strip(), created_at = time.time(),)
         #Goes to the slot for the id & writes the data
-        self_threads.document( thread.id).set ({ "id " : thread.id , "title" : thread.title , "tags" : thread.tags, "author_email" : thread.author_email, "created_at" : thread.created_at})
+        self._threads.document( thread.id).set ({ "id " : thread.id , "title" : thread.title , "tags" : thread.tags, "author_email" : thread.author_email, "created_at" : thread.created_at})
         return thread
 
     #Turn one firestore document backinto a thread object
@@ -27,7 +29,7 @@ class ForumManager:
         return Thread( d ["id"], d[ "title"], d[ "tags"], d ["author_email"], d["created_at"])
 
     #Gets every thread in the collection
-    def list_threads( self) -> list[Threads]:
+    def list_threads( self) -> list[Thread]:
         return [ self._thread_from_doc(doc) for doc in self._threads.stream()]
 
     #Lists only the threads that carry a tag
@@ -58,7 +60,6 @@ class ForumManager:
         #Reads the thread once to conifrm it exists
         if not doc.exists: 
             raise ValueError( " Thread does not exist")
-
         message = Message( id = uuid.uuid4().hex, thread_id = thread_id, parent_id = parent_id, author_email = author_email.lower().strip(), body = body.strip(), created_at = time.time())
         #Stores the parent so we can rebuild the tree again
         self._threads.document(thread_id).collection("messages").document(message.id).set({
