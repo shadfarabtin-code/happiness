@@ -1,14 +1,15 @@
 import time
 import uuid
 from typing import Optional
-from services.firestoreClient import database as db
+from firebase_admin import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 from models.thread import Thread
 
 #Creates the thread & reads it back from firestore
 class ForumManager:
     def __init__(self) -> None:
-        self._threads = db.collection( "threads")
+        self._threads = firestore.client().collection( "threads")
+        self._notifications = firestore.client().collection("notifications")   # top-level inbox bucket
 
     #Builds a new topic, saves it to firestore & then returns it
     def create_thread( self, title : str , tags : list[str], author_email : str ) -> Thread:
@@ -33,3 +34,42 @@ class ForumManager:
         #Asks firestore for a filtered set where the tags list contains this tag
         query = self._threads.where( filter = FieldFilter( "tags", "array_contains", tag.lower().strip()))
         return [self._thread_from_doc(doc) for doc in query.stream()] #Rebuilds each Thread
+
+    #A user opts into a thread & starts following it
+    def subscribe ( self, thread_id : str, email : str) -> None:
+        email = email.lower().strip()
+        #Stores the susbcribers in a subbucket on the thread
+        self._threads.document(thread_id).collection("subscribers").document(email).set({"email" : email, "subscribed_at" : time.time()})
+
+    #Unsubscribing from a thread
+    def unsubscribe( self, thread_id : str, email : str) -> None:
+        self._threads.document(thread_id).collection("subscribers").document(email.lower().strip().delete())
+
+    #List of subscribers, every email that is following a a specific thread 
+    def list_subscribers( self, thread_id : str) -> list[str]:
+        docs = self._thread.document( thread_id).collection( "subscribers").stream()
+        #Returning it just pulls all the emails out
+        return [doc.to_dict()["email"] for doc in docs]
+
+    #Add a reply, parents_id says which message your replying to 
+    def post_message( self, thread_id : str, author_id : str, body : str, parent_id : Optional [str] = None ) -> Message:
+        doc = self._threads.document( thread_id).get()
+        #Reads the thread once to conifrm it exists
+        if not doc.exists: 
+            raise ValueError( " Thread does not exist")
+
+        message = Message( id = uuid.uuid4().hex, thread_id = thread_id, parent_id = parent_id, author_emai = author_email.lower().strip(), body = body.strip(), created_at = time.time())
+        #Stores the parent so we can rebuild the tree again
+        self._threds.document(thread_id).collection("messages").document(message.id).set({
+            "id" : message.id, "thread_id" = message.thread_id, "parent_id" = message.parent_id, "author_email" = message.author_email, "body" = message.body, "created_at" = message.created_at
+        })
+        return message
+    #Reads the new field so any old message without it defaults to none
+    def _message_from_doc( self, doc) -> Optional[Message]:
+        if not doc.exists:
+            return None
+        d = doc.to_dict()
+        
+
+
+    
