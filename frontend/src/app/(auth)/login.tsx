@@ -6,6 +6,7 @@ import { Heading, ErrorText, HyperlinkText } from "@/components/Text";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { useAuth } from "@/services/authContext";
+import { login } from "@/services/api";
 
 const Login = () => {
   const { user, setAuth } = useAuth();
@@ -27,28 +28,17 @@ const Login = () => {
     }
 
     try {
-      const response = await fetch("https://backend-995991413043.us-west1.run.app/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error("Login failed", response.status, errorData);
-        setError("Login failed. Check your email and password.");
-        return;
-      }
-
-      const { token, user } = await response.json();
+      const { token, user } = await login(email, password);
       setAuth(user, token);
-      console.log(user);
       router.replace("/home");
-
-
     } catch (err) {
       console.error("Login failed", err);
-      setError("Login failed. Failed to fetch from server.");
+      // A TypeError means fetch itself couldn't reach the server; anything else is a response the backend sent back.
+      if (err instanceof TypeError) {
+        setError("Login failed. Failed to fetch from server.");
+      } else {
+        setError("Login failed. Check your email and password.");
+      }
     }
   }
 

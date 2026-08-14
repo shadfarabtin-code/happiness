@@ -5,13 +5,19 @@ import { router } from "expo-router";
 import { View } from "react-native";
 import { Avatar, ListItem, Overlay, useTheme } from "@rneui/themed";
 import { OptionButton } from "@/components/Buttons";
+import { logout } from "@/services/api";
 
 export const UserSettings = () => {
     const [active, isActive] = useState(false);
-    const { user, setAuth } = useAuth();
+    const { user, token, setAuth } = useAuth();
     const { theme } = useTheme();
 
     async function handleLogout() {
+        if (token) {
+            // Best-effort: invalidate the session server-side so a leaked token can't be reused.
+            // Still log out locally even if this fails (e.g. offline).
+            await logout(token).catch((err) => console.error("Failed to invalidate session", err));
+        }
         setAuth(null, null);
         router.replace("/login");
     }

@@ -6,8 +6,9 @@ export default function Index() {
   const { user } = useAuth();
 
   useEffect(() => {
-    router.replace("/home");
-  });
+    if (user === undefined) return; // still loading
+    router.replace(user ? "/home" : "/login");
+  }, [user]);
 
   return null;
 }
