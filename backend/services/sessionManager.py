@@ -26,7 +26,7 @@ class SessionManager:
         if not doc.exists:
             return None
         data = doc.to_dict()
-        if time.time > data["expires_at"]:
+        if time.time() > data["expires_at"]:
             self._sessions.document(token).delete()
             return None
         return data["email"]

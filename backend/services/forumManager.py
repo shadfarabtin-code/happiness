@@ -45,7 +45,7 @@ class ForumManager:
 
     #Unsubscribing from a thread
     def unsubscribe( self, thread_id : str, email : str) -> None:
-        self._threads.document(thread_id).collection("subscribers").document(email.lower().strip().delete())
+        self._threads.document(thread_id).collection("subscribers").document(email.lower().strip()).delete()
 
     #List of subscribers, every email that is following a a specific thread 
     def list_subscribers( self, thread_id : str) -> list[str]:
@@ -53,16 +53,16 @@ class ForumManager:
         #Returning it just pulls all the emails out
         return [doc.to_dict()["email"] for doc in docs]
 
-    #Add a reply, parents_id says which message your replying to 
-    def post_message( self, thread_id : str, author_email : str, body : str, parents_id : Optional [str] = None ) -> Message:
+    #Add a reply, parent_id says which message your replying to
+    def post_message( self, thread_id : str, author_email : str, body : str, parent_id : Optional [str] = None ) -> Message:
         doc = self._threads.document( thread_id).get()
         #Reads the thread once to conifrm it exists
-        if not doc.exists: 
+        if not doc.exists:
             raise ValueError( " Thread does not exist")
-        message = Message( id = uuid.uuid4().hex, thread_id = thread_id, parents_id = parents_id, author_email = author_email.lower().strip(), body = body.strip(), created_at = time.time())
+        message = Message( id = uuid.uuid4().hex, thread_id = thread_id, parent_id = parent_id, author_email = author_email.lower().strip(), body = body.strip(), created_at = time.time())
         #Stores the parent so we can rebuild the tree again
         self._threads.document(thread_id).collection("messages").document(message.id).set({
-            "id" : message.id, "thread_id" : message.thread_id, "parent_id" : message.parents_id, "author_email" : message.author_email, "body" : message.body, "created_at" : message.created_at
+            "id" : message.id, "thread_id" : message.thread_id, "parent_id" : message.parent_id, "author_email" : message.author_email, "body" : message.body, "created_at" : message.created_at
         })
         return message
     #Reads the new field so any old message without it defaults to none
@@ -71,6 +71,11 @@ class ForumManager:
             return None
         d = doc.to_dict()
         return Message( d["id"], d["thread_id"], d.get("parent_id"), d["author_email"], d["body"], d["created_at"])
+
+    #Fetches every message in the thread, oldest first
+    def list_messages( self, thread_id : str) -> list[Message]:
+        docs = self._threads.document( thread_id).collection( "messages").order_by( "created_at").stream()
+        return [self._message_from_doc(doc) for doc in docs]
 
     #Fetches all the messages and puts them into a reply tree
     def get_thread_tree ( self, thread_id : str) -> list[dict]:
@@ -81,6 +86,21 @@ class ForumManager:
         for m in messages:
             #Groups siblings together in order of time
             children_of.setdefault(m.parent_id, []).append(m)
+
+        #Recursively attaches each message's replies under it
+        def build(message : Message) -> dict:
+            return {
+                "id" : message.id,
+                "thread_id" : message.thread_id,
+                "parent_id" : message.parent_id,
+                "author_email" : message.author_email,
+                "body" : message.body,
+                "created_at" : message.created_at,
+                "replies" : [build(child) for child in children_of.get(message.id, [])],
+            }
+
+        #Roots are the messages with no parent
+        return [build(root) for root in children_of.get(None, [])]
 
 
 
