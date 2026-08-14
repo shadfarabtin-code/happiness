@@ -65,6 +65,7 @@ class ForumManager:
             "id" : message.id, "thread_id" : message.thread_id, "parent_id" : message.parents_id, "author_email" : message.author_email, "body" : message.body, "created_at" : message.created_at
         })
         return message
+    
     #Reads the new field so any old message without it defaults to none
     def _message_from_doc( self, doc) -> Optional[Message]:
         if not doc.exists:
