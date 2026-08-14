@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { setItem, getItem, deleteItem } from "@/services/storage";
+import { getMe, setUnauthorizedHandler, UnauthorizedError } from "@/services/api";
 
 export type User = {
     id: string;
@@ -31,6 +32,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         else return null;
     }
 
+    // Function to get token from secure storage
+    async function getToken() {
+        let result = await getItem("token");
+        if (result) return JSON.parse(result);
+        else return null;
+    }
+
     // Function to update BOTH in-memory state AND persisted storage
     async function setAuth(user: User | null | undefined, token: string | null) {
         setUserState(user);
@@ -41,14 +49,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         else await deleteItem("token"); // for logout
     }
 
-    // Load persisted user on app start
+    // Load persisted user & token on app start, and confirm the token is still valid with the backend
     useEffect(() => {
-        async function loadUser() {
-            getUser().then((storedUser) => {
+        async function loadAuth() {
+            const [storedUser, storedToken] = await Promise.all([getUser(), getToken()]);
+
+            if (!storedToken) {
+                setUserState(null);
+                setTokenState(null);
+                return;
+            }
+
+            try {
+                const freshUser: User = await getMe(storedToken);
+                setUserState(freshUser);
+                setTokenState(storedToken);
+                await setItem("user", JSON.stringify(freshUser));
+            } catch (err) {
+                if (err instanceof UnauthorizedError) return; // the 401 handler below already logged us out
+                // Some other failure (e.g. offline) — fall back to the cached session rather than logging out.
+                console.error("Failed to validate session", err);
                 setUserState(storedUser);
-            });
+                setTokenState(storedToken);
+            }
         }
-        loadUser();
+        loadAuth();
+    }, []);
+
+    // If any backend request comes back 401 (expired/revoked session), drop the stale local auth state
+    useEffect(() => {
+        setUnauthorizedHandler(() => setAuth(null, null));
+        return () => setUnauthorizedHandler(null);
     }, []);
 
     return (

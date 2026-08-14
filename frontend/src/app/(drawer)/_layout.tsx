@@ -1,37 +1,54 @@
-import { Pressable, View, useWindowDimensions } from "react-native";
-import { Slot } from "expo-router";
-import { useState, useEffect } from "react";
+import { Animated, Easing, Pressable, View, useWindowDimensions } from "react-native";
+import { Slot, router } from "expo-router";
+import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { useTheme } from "@rneui/themed";
+import { useAuth } from "@/services/authContext";
 
 
 export default function DrawerLayout() {
     const { theme } = useTheme();
+    const { user } = useAuth();
     const isWideScreen = useWindowDimensions().width >= 1024;
     const sidebarWidth = isWideScreen ? 260 : 200;
     const [sidebarOpen, setSidebarOpen] = useState(isWideScreen);
+
+    const translateX = useRef(new Animated.Value(sidebarOpen ? 0 : -sidebarWidth+60)).current;
 
     useEffect(() => {
         setSidebarOpen(isWideScreen);
     }, [isWideScreen]);
 
+    useEffect(() => {
+        if (user === null) router.replace("/login");
+    }, [user]);
+
+    useEffect(() => {
+        Animated.timing(translateX, {
+            toValue: sidebarOpen ? 0 : -sidebarWidth+60,
+            duration: 220,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+        }).start();
+    }, [sidebarOpen, sidebarWidth, translateX]);
+
     return (
         <View style={{ backgroundColor: theme.colors.background, flex: 1 }}>
             <Header onMenuPress={() => setSidebarOpen((prev) => !prev)} />
             <View style={{ flex: 1, flexDirection: "row" }}>
-                <View
+                <Animated.View
                     style={[
                         isWideScreen
                             ? { width: sidebarWidth }
                             : { position: "absolute", top: 0, bottom: 0, left: 0, width: sidebarWidth, zIndex: 10 },
                         {
-                            transform: [{ translateX: sidebarOpen ? 0 : -200 }],
+                            transform: [{ translateX }],
                         },
                     ]}
                 >
                     <Sidebar toggle={() => setSidebarOpen((prev) => !prev)} />
-                </View>
+                </Animated.View>
 
                 {!isWideScreen && sidebarOpen && (
                     <Pressable

@@ -9,7 +9,7 @@ const SidebarContent = ({ width }: { width: number }) => {
     const { theme } = useTheme();
     return (
         <View style={{  width, borderRightWidth: 1, borderRightColor: theme.colors.grey4, padding: 16, flex: 1 }}>
-            <OptionButton title="Home" onPress={() => router.navigate("/home")} />
+            <OptionButton title="Home" icon={{ name: "home", type: "material" }} onPress={() => router.navigate("/home")} />
         </View>
     );
 }

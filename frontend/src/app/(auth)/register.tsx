@@ -7,10 +7,11 @@ import { SelectionButton } from "@/components/Buttons";
 import { CenteredView, Card } from "@/components/Views";
 import { Heading, ErrorText, HyperlinkText } from "@/components/Text";
 import { TextDropdown } from "@/components/Dropdown";
+import { register } from "@/services/api";
 
 const Register = () => {
   const navigation = useNavigation()
-  const { user, token, setAuth } = useAuth();
+  const { user, setAuth } = useAuth();
   
   useEffect(() => {
     if (user) router.replace("/home");
@@ -50,6 +51,10 @@ const Register = () => {
         setError("Passwords don't match.");
         return;
       }
+      if (password.length > 32) {
+        setError("Password must be 32 characters or fewer.");
+        return;
+      }
       setStep(2);
     } else if (step === 2) {
       if (role !== "seeker" && role !== "provider") {
@@ -72,36 +77,24 @@ const Register = () => {
 
   async function handleRegister() {
     try {
-      const response = await fetch("https://backend-995991413043.us-west1.run.app/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email: email, 
-          password: password, 
-          first_name: firstName, 
-          last_name: lastName, 
-          role: role, 
-          company_name: role === "provider" ? companyName : null, 
-        }),
+      const { token, user } = await register({
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        role,
+        company_name: role === "provider" ? companyName : null,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error("Registration failed:", response.status, errorData);
-        setError("Registration failed. Check your input.");
-        return;
-      }
-
-      const { user, token } = await response.json();
       setAuth(user, token);
-      console.log(user);
       router.replace("/home");
-
-      
-
     } catch (err) {
       console.error("Registration failed", err);
-      setError("Registration failed. Failed to fetch from server.");
+      // A TypeError means fetch itself couldn't reach the server; anything else is a response the backend sent back.
+      if (err instanceof TypeError) {
+        setError("Registration failed. Failed to fetch from server.");
+      } else {
+        setError("Registration failed. Check your input.");
+      }
     }
   }
 
@@ -112,8 +105,8 @@ const Register = () => {
           <>
             <Heading>Welcome to Happiness!</Heading>
             <Input placeholder="Email Address" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-            <Input placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
-            <Input placeholder="Confirm Password" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} />
+            <Input placeholder="Password" secureTextEntry maxLength={32} value={password} onChangeText={setPassword} />
+            <Input placeholder="Confirm Password" secureTextEntry maxLength={32} value={confirmPassword} onChangeText={setConfirmPassword} />
           </>
         )}  
 

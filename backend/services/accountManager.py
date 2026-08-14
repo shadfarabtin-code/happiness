@@ -64,23 +64,26 @@ class AccountManager:
     #Proves that you own the inbox by creating a token & token expiration timer
     def create_verification_token( self, email : str , ttl_seconds : float = token_ttl_seconds) -> str:
         email = email.lower().strip()
-        if email not in self._users:
+        if not self._users.document(email).get().exists:
             raise ValueError("No such account")
         token = secrets.token_urlsafe(32)
-        self._pending_tokens[token] = PendingVerification(email=email, expires_at=time.time() + ttl_seconds)
+        self._tokens.document(token).set(asdict(PendingVerification(email=email, expires_at=time.time() + ttl_seconds)))
         return token
 
     #Verifies the token and marks the user as verified
     def verify( self, token : str) -> bool:
-        pending = self._pending_tokens.pop(token , None)
-        if pending is None:
+        doc = self._tokens.document(token).get()
+        if not doc.exists:
             return False
+        self._tokens.document(token).delete()
+        pending = PendingVerification(**doc.to_dict())
         if pending.expires_at < time.time():
             return False
-        email = pending.email
-        old = self._users[email]
-        self._users[email] = replace(old, is_verified=True)
-        return True 
+        old = self._get(pending.email)
+        if old is None:
+            return False
+        self._users.document(pending.email).set(asdict(replace(old, is_verified=True)))
+        return True
 
 
 

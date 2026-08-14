@@ -1,6 +1,7 @@
 from typing import Optional
 from models.user import User
-from firestoreClient import accounts, sessions
+from services.firestoreClient import accounts, sessions
+from fastapi import Header, HTTPException
 
 
 
@@ -15,8 +16,11 @@ def _token_from_request(authorization : Optional[str]) -> Optional[str]:
 
 #Resolves the logged in user from the Authorization header, returns user or None if the token is missing/bad/expired
 
-def current_user(authorization : Optional[str]) -> Optional[User]:
+def get_current_user(authorization : Optional[str] = Header(None)) -> User:
     email = sessions.email_for(_token_from_request(authorization))
     if email is None:
-        return None
-    return accounts._get(email)
+        raise HTTPException(401, "Invalid or expired session")
+    user =  accounts._get(email)
+    if user is None:
+        raise HTTPException(401, "Invalid or expired session")
+    return user
