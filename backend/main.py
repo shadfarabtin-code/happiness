@@ -8,9 +8,13 @@ from services.accessToken import get_current_user, _token_from_request
 
 from schemas.user import RegisterRequest, LoginRequest, LoginResponse, UserResponse
 from schemas.thread import NewThread, NewMessage, ThreadOut, MessageOut, MessageNode
+from schemas.conversations import StartChat, ChatMessageIn
 
 from models.user import User
 from models.thread import Thread
+
+
+
 
 app = FastAPI()
 app.add_middleware(
@@ -75,3 +79,30 @@ def post_message( thread_id : str, payload : NewMessage, user : User = Depends(g
 def get_tree ( thread_id : str): #The tree is ready for frontend to render
     return forums.get_thread_tree(thread_id)
 
+
+# Opens the chat with the person
+@app.post("/conversations")
+def start_conversation(payload: StartChat, user: User = Depends(get_current_user)):
+    return convos.get_or_create(user.email, payload.other_email)   # "me" is from the token
+
+# The inbox, list of conversations your in
+@app.get("/conversations")
+def my_conversations(user: User = Depends(get_current_user)):
+    return convos.list_my_conversations(user.email)
+
+# block anyone who isn't one of the two people in this conversation
+def _require_participant(conversation_id: str, user: User):
+    conv = convos.get(conversation_id)
+    if conv is None or user.email not in conv.participants:
+        raise HTTPException(403, "You're not part of this conversation")
+    return conv
+
+@app.get("/conversations/{conversation_id}/messages")
+def get_messages(conversation_id: str, user: User = Depends(get_current_user)):
+    _require_participant(conversation_id, user)         # can't read a chat you're not in
+    return convos.list_messages(conversation_id)
+
+@app.post("/conversations/{conversation_id}/messages")
+def send_message(conversation_id: str, payload: ChatMessageIn, user: User = Depends(get_current_user)):
+    _require_participant(conversation_id, user)         # can't post to a chat you're not in
+    return convos.send_message(conversation_id, user.email, payload.body)
