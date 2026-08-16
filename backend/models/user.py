@@ -4,11 +4,8 @@ from dataclasses import dataclass
 class User:
     id : str
     email : str
-    first_name : str
-    last_name : str
     password_hash : str
     role : str
-    company_name : str | None = None
     is_verified : bool = False
 
 
@@ -16,3 +13,10 @@ class User:
 class PendingVerification:
     email : str
     expires_at : float
+
+@dataclass (frozen=True)
+class Session:
+    email : str
+    expires_at : float
+
+

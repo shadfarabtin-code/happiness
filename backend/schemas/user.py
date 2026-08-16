@@ -1,15 +1,11 @@
-from typing import Literal
-
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 #data validation from react front end to back end server
 
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
-    first_name: str
-    last_name: str
-    role: Literal["seeker", "provider"]
-    company_name: str | None = None
+    role: str  # "seeker" or "provider"
 
 
 class LoginRequest(BaseModel):
@@ -17,17 +13,22 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class UserResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class UserOut(BaseModel):
     id: str
     email: str
-    first_name: str
-    last_name: str
     role: str
-    company_name: str | None = None
     is_verified: bool
 
 class LoginResponse(BaseModel):
     token: str
-    user: UserResponse
+    user: UserOut
+
+class NewThread(BaseModel):
+    title: str
+    tags: list[str]
+
+class NewMessage(BaseModel):
+    body : str
+    parent_id : Optional[ str] = None
+
+
