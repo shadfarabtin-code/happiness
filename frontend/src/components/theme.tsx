@@ -34,6 +34,11 @@ export const AppTheme = ({ children }: { children: React.ReactNode }) => {
                     backgroundColor: theme.colors?.grey4,
                     margin: 10
                 }
+            }),
+            Text: (props, theme) => ({
+                style: {
+                    color: theme.colors?.text,
+                }
             })
         },
     });

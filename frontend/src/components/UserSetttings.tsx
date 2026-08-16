@@ -58,7 +58,7 @@ export const UserSettings = () => {
                         </ListItem.Content>
                     </ListItem>
                 </View>
-                <OptionButton title="Log Out" onPress={() => handleLogout()} />
+                <OptionButton title="Log Out" icon={{ name: "sensor-door" }} onPress={() => handleLogout()} />
             </Overlay>
         </>
     );

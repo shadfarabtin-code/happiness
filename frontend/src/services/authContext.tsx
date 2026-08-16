@@ -28,15 +28,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Function to get user from secure storage
     async function getUser() {
         let result = await getItem("user");
-        if (result) return JSON.parse(result);
-        else return null;
+        if (!result) return null;
+        try {
+            return JSON.parse(result);
+        } catch (err) {
+            console.error("Corrupt stored user, clearing it", err);
+            await deleteItem("user");
+            return null;
+        }
     }
 
     // Function to get token from secure storage
     async function getToken() {
         let result = await getItem("token");
-        if (result) return JSON.parse(result);
-        else return null;
+        if (!result) return null;
+        try {
+            return JSON.parse(result);
+        } catch (err) {
+            console.error("Corrupt stored token, clearing it", err);
+            await deleteItem("token");
+            return null;
+        }
     }
 
     // Function to update BOTH in-memory state AND persisted storage

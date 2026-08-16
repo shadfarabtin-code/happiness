@@ -1,6 +1,7 @@
 import React from "react";
-import { Text, Pressable } from "react-native";
+import { Text, Pressable, View } from "react-native";
 import { useTheme } from "@rneui/themed";
+import MaterialIcons from "@react-native-vector-icons/material-icons";
 
 export const Heading = ({ children }: { children: React.ReactNode }) => {
     const { theme } = useTheme()
@@ -25,6 +26,26 @@ export const ErrorText = ({ children }: { children: React.ReactNode }) => {
         }}>
             {children}
         </Text>
+    )
+};
+
+export const Tag = ({ children }: { children: React.ReactNode }) => {
+    const { theme } = useTheme()
+
+    return (
+        <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 4,
+            borderWidth: 1,
+            borderColor: theme.colors?.grey4,
+            borderRadius: 999,
+            paddingVertical: 4,
+            paddingHorizontal: 10,
+        }}>
+            <MaterialIcons name="local-offer" size={12} color={theme.colors?.grey3} />
+            <Text style={{ color: theme.colors?.grey3, fontSize: 12 }}>{children}</Text>
+        </View>
     )
 };
 

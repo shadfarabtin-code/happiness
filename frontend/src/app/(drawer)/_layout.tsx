@@ -1,4 +1,4 @@
-import { Animated, Easing, Pressable, View, useWindowDimensions } from "react-native";
+import { Animated, Easing, Platform, Pressable, View, useWindowDimensions } from "react-native";
 import { Slot, router } from "expo-router";
 import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "@/components/Sidebar";
@@ -14,7 +14,8 @@ export default function DrawerLayout() {
     const sidebarWidth = isWideScreen ? 260 : 200;
     const [sidebarOpen, setSidebarOpen] = useState(isWideScreen);
 
-    const translateX = useRef(new Animated.Value(sidebarOpen ? 0 : -sidebarWidth+60)).current;
+    const translateX = useRef(new Animated.Value(sidebarOpen ? 0 : -sidebarWidth+50)).current;
+    const boxWidth = useRef(new Animated.Value(sidebarOpen ? sidebarWidth : 50)).current;
 
     useEffect(() => {
         setSidebarOpen(isWideScreen);
@@ -25,13 +26,24 @@ export default function DrawerLayout() {
     }, [user]);
 
     useEffect(() => {
-        Animated.timing(translateX, {
-            toValue: sidebarOpen ? 0 : -sidebarWidth+60,
-            duration: 220,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-        }).start();
-    }, [sidebarOpen, sidebarWidth, translateX]);
+        Animated.parallel([
+            Animated.timing(translateX, {
+                toValue: sidebarOpen ? 0 : -sidebarWidth+50,
+                duration: 220,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: Platform.OS !== "web",
+            }),
+            // Width can't run on the native driver, but it's what actually frees up
+            // layout space for the content next to it — translateX alone is just a
+            // visual shift and leaves the row's reserved width untouched.
+            Animated.timing(boxWidth, {
+                toValue: sidebarOpen ? sidebarWidth : 50,
+                duration: 220,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: false,
+            }),
+        ]).start();
+    }, [sidebarOpen, sidebarWidth, translateX, boxWidth]);
 
     return (
         <View style={{ backgroundColor: theme.colors.background, flex: 1 }}>
@@ -40,7 +52,7 @@ export default function DrawerLayout() {
                 <Animated.View
                     style={[
                         isWideScreen
-                            ? { width: sidebarWidth }
+                            ? { width: boxWidth }
                             : { position: "absolute", top: 0, bottom: 0, left: 0, width: sidebarWidth, zIndex: 10 },
                         {
                             transform: [{ translateX }],

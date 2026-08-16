@@ -15,9 +15,7 @@ export const Card = ({ children, width }: { children: React.ReactNode, width: nu
             padding: 24,
             borderRadius: 8,
             gap: 16,
-            shadowColor: "black",
-            shadowOpacity: 0.2,
-            shadowRadius: 10,
+            boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)",
             elevation: 8,
         }}>
             {children}
