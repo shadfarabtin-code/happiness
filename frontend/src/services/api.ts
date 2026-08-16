@@ -1,4 +1,19 @@
-export const API_URL = "https://backend-995991413043.us-west1.run.app";
+const PROD_API_URL = "https://backend-995991413043.us-west1.run.app";
+const LOCAL_API_URL = "http://127.0.0.1:8000";
+
+// On web, hitting the app via localhost (dev) talks to the local backend;
+// anywhere else (deployed on Cloud Run, or native builds) talks to the deployed backend.
+function resolveApiUrl(): string {
+  if (typeof window !== "undefined" && typeof window.location !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return LOCAL_API_URL;
+    }
+  }
+  return PROD_API_URL;
+}
+
+export const API_URL = resolveApiUrl();
 
 export type ThreadOut = {
   id: string;
@@ -117,6 +132,43 @@ export function postMessage(
   return request<MessageOut>(
     `/threads/${threadId}/messages`,
     { method: "POST", body: JSON.stringify({ body, parent_id: parentId }) },
+    token
+  );
+}
+
+export type ConversationOut = {
+  id: string;
+  participants: string[];
+  created_at: number;
+};
+
+export type ChatMessageOut = {
+  id: string;
+  sender_email: string;
+  body: string;
+  created_at: number;
+};
+
+export function startConversation(token: string, otherEmail: string): Promise<ConversationOut> {
+  return request<ConversationOut>(
+    "/conversations",
+    { method: "POST", body: JSON.stringify({ other_email: otherEmail }) },
+    token
+  );
+}
+
+export function getConversations(token: string): Promise<ConversationOut[]> {
+  return request<ConversationOut[]>("/conversations", { method: "GET" }, token);
+}
+
+export function getConversationMessages(token: string, conversationId: string): Promise<ChatMessageOut[]> {
+  return request<ChatMessageOut[]>(`/conversations/${conversationId}/messages`, { method: "GET" }, token);
+}
+
+export function sendChatMessage(token: string, conversationId: string, body: string): Promise<ChatMessageOut> {
+  return request<ChatMessageOut>(
+    `/conversations/${conversationId}/messages`,
+    { method: "POST", body: JSON.stringify({ body }) },
     token
   );
 }

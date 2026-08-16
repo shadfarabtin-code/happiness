@@ -25,7 +25,7 @@ export const Header = ({ onMenuPress }: { onMenuPress: () => void }) => {
                         <OptionButton
                             title="Chat"
                             icon={{ name: "chat-bubble-outline", type: "material" }}
-                            onPress={() => {}}
+                            onPress={() => router.push("/chat")}
                         />
                         <OptionButton
                             title="Create"

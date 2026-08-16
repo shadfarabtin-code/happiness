@@ -22,10 +22,6 @@ export default function DrawerLayout() {
     }, [isWideScreen]);
 
     useEffect(() => {
-        if (user === null) router.replace("/login");
-    }, [user]);
-
-    useEffect(() => {
         Animated.parallel([
             Animated.timing(translateX, {
                 toValue: sidebarOpen ? 0 : -sidebarWidth+50,

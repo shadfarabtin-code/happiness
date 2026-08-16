@@ -8,7 +8,7 @@ import { useTheme } from "@rneui/themed";
 const SidebarContent = ({ width }: { width: number }) => {
     const { theme } = useTheme();
     return (
-        <View style={{  width, borderRightWidth: 1, borderRightColor: theme.colors.grey4, padding: 16, paddingRight: 35, flex: 1 }}>
+        <View style={{ backgroundColor: theme.colors.background, width, borderRightWidth: 1, borderRightColor: theme.colors.grey4, padding: 16, paddingRight: 35, flex: 1 }}>
             <OptionButton title="Home" icon={{ name: "home", type: "material" }} onPress={() => router.navigate("/home")} />
         </View>
     );
