@@ -52,6 +52,10 @@ class AccountManager:
     def _get(self, email : str) -> Optional[User]:
         return self._user_from_doc(self._users.document(email.lower().strip()).get())
 
+    #Whether an account with this email exists at all
+    def exists(self, email : str) -> bool:
+        return self._users.document(email.lower().strip()).get().exists
+
     #Return user if email & password match, otherwise None
     def authenticate( self, email : str, password : str) -> Optional[User]:
         user = self._get(email)

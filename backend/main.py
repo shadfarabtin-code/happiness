@@ -1,12 +1,13 @@
+import os
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
-from services.firestoreClient import accounts, sessions, forums
+from services.firestoreClient import accounts, sessions, forums, convos
 from services.accessToken import get_current_user, _token_from_request
 
-from schemas.user import RegisterRequest, LoginRequest, LoginResponse, UserResponse
+from schemas.user import RegisterRequest, LoginRequest, LoginResponse, UserOut
 from schemas.thread import NewThread, NewMessage, ThreadOut, MessageOut, MessageNode
 from schemas.conversations import StartChat, ChatMessageIn
 
@@ -17,9 +18,15 @@ from models.thread import Thread
 
 
 app = FastAPI()
+
+# Set ALLOWED_ORIGINS (comma-separated) as a Cloud Run env var to lock this down to the
+# deployed frontend's origin. Defaults to local dev origins only, never a wildcard.
+_default_origins = "https://frontend-995991413043.us-west1.run.app,http://localhost:8081,http://127.0.0.1:8081"
+allowed_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", _default_origins).split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], #change to specific origin in production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,7 +50,7 @@ def login(payload: LoginRequest):
     token: str = sessions.create_session(user.email)
     return {"token": token, "user": user}
 
-@app.get("/me", response_model=UserResponse)
+@app.get("/me", response_model=UserOut)
 def get_me(user : User = Depends(get_current_user)): #Frontend calls this on launch to check a stored token is still valid
     return user
 
@@ -83,6 +90,8 @@ def get_tree ( thread_id : str): #The tree is ready for frontend to render
 # Opens the chat with the person
 @app.post("/conversations")
 def start_conversation(payload: StartChat, user: User = Depends(get_current_user)):
+    if not accounts.exists(payload.other_email):
+        raise HTTPException(404, "No account with that email.")
     return convos.get_or_create(user.email, payload.other_email)   # "me" is from the token
 
 # The inbox, list of conversations your in

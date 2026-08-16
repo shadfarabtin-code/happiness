@@ -5,7 +5,10 @@ from typing import Optional
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
+    first_name: str
+    last_name: str
     role: str  # "seeker" or "provider"
+    company_name: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -16,7 +19,10 @@ class LoginRequest(BaseModel):
 class UserOut(BaseModel):
     id: str
     email: str
+    first_name: str
+    last_name: str
     role: str
+    company_name: Optional[str] = None
     is_verified: bool
 
 class LoginResponse(BaseModel):
