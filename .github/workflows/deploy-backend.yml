@@ -1,0 +1,44 @@
+name: Deploy backend to Cloud Run
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: happiness-cloud
+  REGION: us-west1
+  SERVICE: backend
+  IMAGE: us-west1-docker.pkg.dev/happiness-cloud/cloud-run-source-deploy/backend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/995991413043/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-deployer@happiness-cloud.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - run: gcloud auth configure-docker us-west1-docker.pkg.dev --quiet
+
+      - run: |
+          docker build -t ${{ env.IMAGE }}:${{ github.sha }} ./backend
+          docker push ${{ env.IMAGE }}:${{ github.sha }}
+
+      - uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.IMAGE }}:${{ github.sha }}
