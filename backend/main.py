@@ -9,7 +9,7 @@ from services.accessToken import get_current_user, _token_from_request
 
 from schemas.user import RegisterRequest, LoginRequest, LoginResponse, UserOut
 from schemas.thread import NewThread, NewMessage, ThreadOut, MessageOut, MessageNode
-from schemas.conversations import StartChat, ChatMessageIn
+from schemas.conversations import StartChat, ChatMessageIn, ConversationOut
 
 from models.user import User
 from models.thread import Thread
@@ -54,6 +54,13 @@ def login(payload: LoginRequest):
 def get_me(user : User = Depends(get_current_user)): #Frontend calls this on launch to check a stored token is still valid
     return user
 
+@app.get("/users/{email}", response_model=UserOut)
+def get_user(email : str, user : User = Depends(get_current_user)): #Look up anyone's profile by email, not just your own
+    found = accounts.get(email)
+    if found is None:
+        raise HTTPException(404, "No account with that email.")
+    return found
+
 @app.post("/logout")
 def logout(authorization : Optional[str] = Header(None)): #Invalidates the session server-side so a leaked/old token stops working immediately
     token = _token_from_request(authorization)
@@ -65,7 +72,7 @@ def logout(authorization : Optional[str] = Header(None)): #Invalidates the sessi
 @app.post("/threads", response_model=ThreadOut)
 def create_threads( payload : NewThread, user : User = Depends(get_current_user)): #Only loggged in person with a token get in
     try:
-        thread: Thread = forums.create_thread(payload.title, payload.tags, user.email)
+        thread: Thread = forums.create_thread(payload.title, payload.tags, user.email, user.first_name, user.last_name)
     except ValueError as e:
         raise HTTPException(400, str(e))
     return thread
@@ -78,7 +85,7 @@ def get_threads( tag : Optional[str] = None): #List threads
 @app.post( "/threads/{thread_id}/messages", response_model=MessageOut)
 def post_message( thread_id : str, payload : NewMessage, user : User = Depends(get_current_user)): #Frontend sends this when they are replying to a message
     try:
-        return forums.post_message( thread_id, user.email, payload.body, payload.parent_id)
+        return forums.post_message( thread_id, user.email, user.first_name, user.last_name, payload.body, payload.parent_id)
     except ValueError as e:
         raise HTTPException(400, str(e))
 
@@ -88,16 +95,28 @@ def get_tree ( thread_id : str): #The tree is ready for frontend to render
 
 
 # Opens the chat with the person
-@app.post("/conversations")
+@app.post("/conversations", response_model=ConversationOut)
 def start_conversation(payload: StartChat, user: User = Depends(get_current_user)):
-    if not accounts.exists(payload.other_email):
+    other = accounts.get(payload.other_email)
+    if other is None:
         raise HTTPException(404, "No account with that email.")
-    return convos.get_or_create(user.email, payload.other_email)   # "me" is from the token
+    conv = convos.get_or_create(user.email, other.email)   # "me" is from the token
+    return {"id": conv.id, "participants": conv.participants, "created_at": conv.created_at, "other_user": other}
+
+# Who "the other person" is in a 1:1 conversation, from this user's point of view
+def _other_participant_email(conv, user: User) -> str:
+    return next((p for p in conv.participants if p != user.email), user.email)
 
 # The inbox, list of conversations your in
-@app.get("/conversations")
+@app.get("/conversations", response_model=list[ConversationOut])
 def my_conversations(user: User = Depends(get_current_user)):
-    return convos.list_my_conversations(user.email)
+    result = []
+    for conv in convos.list_my_conversations(user.email):
+        other = accounts.get(_other_participant_email(conv, user))
+        if other is None:
+            continue   # the other account no longer exists - skip it rather than error the whole inbox
+        result.append({"id": conv.id, "participants": conv.participants, "created_at": conv.created_at, "other_user": other})
+    return result
 
 # block anyone who isn't one of the two people in this conversation
 def _require_participant(conversation_id: str, user: User):
@@ -105,6 +124,14 @@ def _require_participant(conversation_id: str, user: User):
     if conv is None or user.email not in conv.participants:
         raise HTTPException(403, "You're not part of this conversation")
     return conv
+
+@app.get("/conversations/{conversation_id}", response_model=ConversationOut)
+def get_conversation(conversation_id: str, user: User = Depends(get_current_user)):
+    conv = _require_participant(conversation_id, user)
+    other = accounts.get(_other_participant_email(conv, user))
+    if other is None:
+        raise HTTPException(404, "The other participant's account no longer exists.")
+    return {"id": conv.id, "participants": conv.participants, "created_at": conv.created_at, "other_user": other}
 
 @app.get("/conversations/{conversation_id}/messages")
 def get_messages(conversation_id: str, user: User = Depends(get_current_user)):

@@ -52,6 +52,10 @@ class AccountManager:
     def _get(self, email : str) -> Optional[User]:
         return self._user_from_doc(self._users.document(email.lower().strip()).get())
 
+    #Public lookup, used when the caller needs the account's full profile (e.g. name), not just its existence
+    def get(self, email : str) -> Optional[User]:
+        return self._get(email)
+
     #Whether an account with this email exists at all
     def exists(self, email : str) -> bool:
         return self._users.document(email.lower().strip()).get().exists

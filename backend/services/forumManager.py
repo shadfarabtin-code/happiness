@@ -14,10 +14,10 @@ class ForumManager:
         self._notifications = db.collection("notifications")   # top-level inbox bucket
 
     #Builds a new topic, saves it to firestore & then returns it
-    def create_thread( self, title : str , tags : list[str], author_email : str ) -> Thread:
-        thread = Thread ( id = uuid.uuid4().hex, title = title.strip(), tags = [t.lower().strip() for t in tags], author_email = author_email.lower().strip(), created_at = time.time(),)
+    def create_thread( self, title : str , tags : list[str], author_email : str, author_first_name : str, author_last_name : str ) -> Thread:
+        thread = Thread ( id = uuid.uuid4().hex, title = title.strip(), tags = [t.lower().strip() for t in tags], author_email = author_email.lower().strip(), author_first_name = author_first_name, author_last_name = author_last_name, created_at = time.time(),)
         #Goes to the slot for the id & writes the data
-        self._threads.document(thread.id).set ({ "id" : thread.id , "title" : thread.title , "tags" : thread.tags, "author_email" : thread.author_email, "created_at" : thread.created_at})
+        self._threads.document(thread.id).set ({ "id" : thread.id , "title" : thread.title , "tags" : thread.tags, "author_email" : thread.author_email, "author_first_name" : thread.author_first_name, "author_last_name" : thread.author_last_name, "created_at" : thread.created_at})
         return thread
 
     #Turn one firestore document backinto a thread object
@@ -25,7 +25,8 @@ class ForumManager:
         if not doc.exists:
             return None
         d = doc.to_dict()
-        return Thread( d ["id"], d[ "title"], d[ "tags"], d ["author_email"], d["created_at"])
+        #.get() defaults keep old documents (written before names were tracked) from blowing up
+        return Thread( d ["id"], d[ "title"], d[ "tags"], d ["author_email"], d.get("author_first_name", ""), d.get("author_last_name", ""), d["created_at"])
 
     #Gets every thread in the collection
     def list_threads( self) -> list[Thread]:
@@ -54,24 +55,24 @@ class ForumManager:
         return [doc.to_dict()["email"] for doc in docs]
 
     #Add a reply, parent_id says which message your replying to
-    def post_message( self, thread_id : str, author_email : str, body : str, parent_id : Optional [str] = None ) -> Message:
+    def post_message( self, thread_id : str, author_email : str, author_first_name : str, author_last_name : str, body : str, parent_id : Optional [str] = None ) -> Message:
         doc = self._threads.document( thread_id).get()
         #Reads the thread once to conifrm it exists
         if not doc.exists:
             raise ValueError( " Thread does not exist")
-        message = Message( id = uuid.uuid4().hex, thread_id = thread_id, parent_id = parent_id, author_email = author_email.lower().strip(), body = body.strip(), created_at = time.time())
+        message = Message( id = uuid.uuid4().hex, thread_id = thread_id, parent_id = parent_id, author_email = author_email.lower().strip(), author_first_name = author_first_name, author_last_name = author_last_name, body = body.strip(), created_at = time.time())
         #Stores the parent so we can rebuild the tree again
         self._threads.document(thread_id).collection("messages").document(message.id).set({
-            "id" : message.id, "thread_id" : message.thread_id, "parent_id" : message.parent_id, "author_email" : message.author_email, "body" : message.body, "created_at" : message.created_at
+            "id" : message.id, "thread_id" : message.thread_id, "parent_id" : message.parent_id, "author_email" : message.author_email, "author_first_name" : message.author_first_name, "author_last_name" : message.author_last_name, "body" : message.body, "created_at" : message.created_at
         })
         return message
-    
+
     #Reads the new field so any old message without it defaults to none
     def _message_from_doc( self, doc) -> Optional[Message]:
         if not doc.exists:
             return None
         d = doc.to_dict()
-        return Message( d["id"], d["thread_id"], d.get("parent_id"), d["author_email"], d["body"], d["created_at"])
+        return Message( d["id"], d["thread_id"], d.get("parent_id"), d["author_email"], d.get("author_first_name", ""), d.get("author_last_name", ""), d["body"], d["created_at"])
 
     #Fetches every message in the thread, oldest first
     def list_messages( self, thread_id : str) -> list[Message]:
@@ -95,6 +96,8 @@ class ForumManager:
                 "thread_id" : message.thread_id,
                 "parent_id" : message.parent_id,
                 "author_email" : message.author_email,
+                "author_first_name" : message.author_first_name,
+                "author_last_name" : message.author_last_name,
                 "body" : message.body,
                 "created_at" : message.created_at,
                 "replies" : [build(child) for child in children_of.get(message.id, [])],

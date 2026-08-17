@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 
 from google.cloud.firestore_v1.base_query import FieldFilter
-from services.firestoreClient import database as db      
+from services.firestoreClient import database as db
 from models.conversation import Conversation
 from models.chatMessage import ChatMessage
 
@@ -28,7 +28,7 @@ class ConversationManager:
         ref.set( {"id" : conv.id, "participants" : conv.participants , "created_at" : conv.created_at})
         return conv
 
-    def _from_doc( self, doc) -> Conversation: 
+    def _from_doc( self, doc) -> Conversation:
         d = doc.to_dict()
         return Conversation ( d["id"], d["participants"], d["created_at"])
 
@@ -51,6 +51,10 @@ class ConversationManager:
     #list every message, oldest comes first
     def list_messages( self, conversation_id : str) -> list[ChatMessage]:
         docs = (self._conversations.document(conversation_id)).collection("messages").order_by("created_at").stream()
-        return [ChatMessage( d.to_dict()["id"], d.to_dict()["sender_email"], d.to_dict()["body"], d.to_dict()["created_at"]) for d in docs]
+        result = []
+        for doc in docs:
+            d = doc.to_dict()
+            result.append(ChatMessage( d["id"], d["sender_email"], d["body"], d["created_at"]))
+        return result
 
 

@@ -6,4 +6,6 @@ class Thread:
     title : str
     tags : list[str]
     author_email : str
-    created_at : float 
+    author_first_name : str
+    author_last_name : str
+    created_at : float
