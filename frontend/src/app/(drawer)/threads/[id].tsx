@@ -5,7 +5,7 @@ import { useTheme, Text } from "@rneui/themed";
 
 import { useAuth } from "@/services/authContext";
 import { getThreads, getThreadTree, postMessage, type MessageNode } from "@/services/api";
-import { flatten, countDescendants, timeAgo } from "@/services/threadContext";
+import { flatten, countDescendants, timeAgo, authorName } from "@/services/threadContext";
 import { ErrorText, Tag } from "@/components/Text";
 import { PillButton } from "@/components/Buttons";
 
@@ -158,7 +158,7 @@ const ThreadDetail = () => {
             {opMessage && (
                 <View style={{ marginTop: 12 }}>
                     <Text style={{ color: theme.colors.grey3, fontSize: 12 }}>
-                        Posted by {opMessage.author_email} · {timeAgo(opMessage.created_at)}
+                        Posted by {authorName(opMessage)} · {timeAgo(opMessage.created_at)}
                     </Text>
                     {opMessage.body ? (
                         <Text style={{ color: theme.colors.text, fontSize: 16, marginTop: 6 }}>
@@ -211,7 +211,7 @@ const ThreadDetail = () => {
                                     </Pressable>
                                 )}
                                 <Text style={{ color: theme.colors.grey3, fontSize: 12 }}>
-                                    {item.node.author_email} · {timeAgo(item.node.created_at)}
+                                    {authorName(item.node)} · {timeAgo(item.node.created_at)}
                                 </Text>
                             </View>
 
@@ -245,7 +245,7 @@ const ThreadDetail = () => {
 
                                     {isReplyOpen && (
                                         <ReplyComposer
-                                            placeholder={`Reply to u/${item.node.author_email.split("@")[0]}`}
+                                            placeholder={`Reply to ${authorName(item.node)}`}
                                             value={activeReplyBody}
                                             onChangeText={setActiveReplyBody}
                                             onCancel={() => {

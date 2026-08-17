@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/cli": "^57.0.11",
     "@expo/ui": "~57.0.8",
+    "@kesha-antonov/react-native-chat": "^4.3.0",
     "@react-native-vector-icons/material-icons": "^13.1.2",
     "@react-navigation/drawer": "^7.13.5",
     "@rneui/base": "^5.0.0",
@@ -29,6 +30,7 @@
     "react-native": "0.86.2",
     "react-native-element-dropdown": "^2.12.4",
     "react-native-gesture-handler": "~2.32.0",
+    "react-native-keyboard-controller": "1.21.9",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",

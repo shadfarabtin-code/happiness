@@ -26,7 +26,7 @@ const ThreadRow = ({ thread, opBody, onPress }: { thread: ThreadOut; opBody?: st
             }}
         >
             <Text style={{ color: theme.colors.grey3, fontSize: 12 }}>
-                u/{thread.author_email.split("@")[0]} · {timeAgo(thread.created_at)}
+                {`${thread.author_first_name} ${thread.author_last_name}`.trim() || thread.author_email} · {timeAgo(thread.created_at)}
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                 <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: "600" }}>

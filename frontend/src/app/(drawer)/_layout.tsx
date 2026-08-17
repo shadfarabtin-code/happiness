@@ -12,9 +12,13 @@ export default function DrawerLayout() {
     const { user } = useAuth();
     const isWideScreen = useWindowDimensions().width >= 1024;
     const sidebarWidth = isWideScreen ? 260 : 200;
+    // Wide screens collapse to a 50px icon rail, so they only need to slide over by
+    // (sidebarWidth - 50). Mobile has no rail — it's an absolute-positioned drawer that
+    // should slide fully off-screen, i.e. by the whole sidebarWidth.
+    const closedOffset = isWideScreen ? -sidebarWidth + 50 : -sidebarWidth;
     const [sidebarOpen, setSidebarOpen] = useState(isWideScreen);
 
-    const translateX = useRef(new Animated.Value(sidebarOpen ? 0 : -sidebarWidth+50)).current;
+    const translateX = useRef(new Animated.Value(sidebarOpen ? 0 : closedOffset)).current;
     const boxWidth = useRef(new Animated.Value(sidebarOpen ? sidebarWidth : 50)).current;
 
     useEffect(() => {
@@ -24,7 +28,7 @@ export default function DrawerLayout() {
     useEffect(() => {
         Animated.parallel([
             Animated.timing(translateX, {
-                toValue: sidebarOpen ? 0 : -sidebarWidth+50,
+                toValue: sidebarOpen ? 0 : closedOffset,
                 duration: 220,
                 easing: Easing.out(Easing.cubic),
                 useNativeDriver: Platform.OS !== "web",
@@ -39,7 +43,7 @@ export default function DrawerLayout() {
                 useNativeDriver: false,
             }),
         ]).start();
-    }, [sidebarOpen, sidebarWidth, translateX, boxWidth]);
+    }, [sidebarOpen, sidebarWidth, closedOffset, translateX, boxWidth]);
 
     return (
         <View style={{ backgroundColor: theme.colors.background, flex: 1 }}>

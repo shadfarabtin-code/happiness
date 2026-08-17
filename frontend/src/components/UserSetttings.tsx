@@ -51,13 +51,39 @@ export const UserSettings = () => {
                         icon={{ name: "person", type: "material" }}
                         onPress={() => isActive(true)}
                     />
-                    <ListItem containerStyle={{ paddingTop: 5, backgroundColor: "transparent" }}>
-                        <ListItem.Content>
-                            <ListItem.Title style={{ marginBottom: 5 }}>{user?.first_name + " " + user?.last_name}</ListItem.Title>
-                            <ListItem.Subtitle>{user?.company_name}</ListItem.Subtitle>
-                        </ListItem.Content>
-                    </ListItem>
+                    {/* RNEUI's ListItem renders an unstyled outer View around its padded content, so
+                        flex/minWidth on containerStyle alone doesn't reach the actual row flex item —
+                        this wrapper is what lets the text shrink instead of pushing the overlay wider. */}
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                        <ListItem containerStyle={{ paddingTop: 5, backgroundColor: "transparent" }}>
+                            <ListItem.Content style={{ minWidth: 0 }}>
+                                <ListItem.Title
+                                    style={{ marginBottom: 5, width: "100%" }}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                >
+                                    {user?.first_name + " " + user?.last_name}
+                                </ListItem.Title>
+                                <ListItem.Subtitle
+                                    style={{ width: "100%" }}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                >
+                                    {user?.company_name}
+                                </ListItem.Subtitle>
+                            </ListItem.Content>
+                        </ListItem>
+                    </View>
                 </View>
+                <OptionButton
+                    title="Profile"
+                    icon={{ name: "person" }}
+                    onPress={() => {
+                        if (!user) return;
+                        isActive(false);
+                        router.push({ pathname: "/profile/[id]", params: { id: user.email } });
+                    }}
+                />
                 <OptionButton title="Log Out" icon={{ name: "sensor-door" }} onPress={() => handleLogout()} />
             </Overlay>
         </>

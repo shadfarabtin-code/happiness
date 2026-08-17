@@ -8,10 +8,10 @@ import { getConversations, startConversation, type ConversationOut } from "@/ser
 import { Heading, ErrorText } from "@/components/Text";
 import { PillButton } from "@/components/Buttons";
 
-const ConversationRow = ({ conversation, meEmail, onPress }: { conversation: ConversationOut; meEmail: string; onPress: () => void }) => {
+const ConversationRow = ({ conversation, onPress }: { conversation: ConversationOut; onPress: () => void }) => {
     const { theme } = useTheme();
     const [hovered, setHovered] = useState(false);
-    const other = conversation.participants.find((p) => p !== meEmail) ?? conversation.participants[0];
+    const otherName = `${conversation.other_user.first_name} ${conversation.other_user.last_name}`.trim();
 
     return (
         <Pressable
@@ -26,14 +26,17 @@ const ConversationRow = ({ conversation, meEmail, onPress }: { conversation: Con
                 backgroundColor: hovered ? "rgba(255, 255, 255, 0.05)" : "transparent",
             }}
         >
-            <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: "600" }}>{other}</Text>
+            <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: "600" }}>
+                {otherName || conversation.other_user.email}
+            </Text>
+            {otherName ? <Text style={{ color: theme.colors.grey3, fontSize: 12 }}>{conversation.other_user.email}</Text> : null}
         </Pressable>
     );
 };
 
 const ChatInbox = () => {
     const { theme } = useTheme();
-    const { user, token } = useAuth();
+    const { token } = useAuth();
 
     const [conversations, setConversations] = useState<ConversationOut[]>([]);
     const [loading, setLoading] = useState(true);
@@ -113,7 +116,6 @@ const ChatInbox = () => {
                 renderItem={({ item }) => (
                     <ConversationRow
                         conversation={item}
-                        meEmail={user?.email ?? ""}
                         onPress={() => router.push({ pathname: "/chat/[id]", params: { id: item.id } })}
                     />
                 )}

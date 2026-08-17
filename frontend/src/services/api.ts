@@ -20,6 +20,8 @@ export type ThreadOut = {
   title: string;
   tags: string[];
   author_email: string;
+  author_first_name: string;
+  author_last_name: string;
   created_at: number;
 };
 
@@ -28,6 +30,8 @@ export type MessageOut = {
   thread_id: string;
   parent_id: string | null;
   author_email: string;
+  author_first_name: string;
+  author_last_name: string;
   body: string;
   created_at: number;
 };
@@ -82,6 +86,10 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
 
 export function getMe(token: string): Promise<UserOut> {
   return request<UserOut>("/me", { method: "GET" }, token);
+}
+
+export function getUser(token: string, email: string): Promise<UserOut> {
+  return request<UserOut>(`/users/${encodeURIComponent(email)}`, { method: "GET" }, token);
 }
 
 export type LoginResponse = {
@@ -139,6 +147,9 @@ export function postMessage(
 export type ConversationOut = {
   id: string;
   participants: string[];
+  // Looked up live from the accounts collection on every request (not stored on the
+  // conversation), so this always reflects the other person's current profile.
+  other_user: UserOut;
   created_at: number;
 };
 
@@ -159,6 +170,10 @@ export function startConversation(token: string, otherEmail: string): Promise<Co
 
 export function getConversations(token: string): Promise<ConversationOut[]> {
   return request<ConversationOut[]>("/conversations", { method: "GET" }, token);
+}
+
+export function getConversation(token: string, conversationId: string): Promise<ConversationOut> {
+  return request<ConversationOut>(`/conversations/${conversationId}`, { method: "GET" }, token);
 }
 
 export function getConversationMessages(token: string, conversationId: string): Promise<ChatMessageOut[]> {

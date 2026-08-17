@@ -14,6 +14,10 @@ export function countDescendants(node: MessageNode): number {
     return node.replies.reduce((sum, child) => sum + 1 + countDescendants(child), 0);
 }
 
+export function authorName(node: { author_first_name: string; author_last_name: string; author_email: string }): string {
+    return `${node.author_first_name} ${node.author_last_name}`.trim() || node.author_email;
+}
+
 export function timeAgo(epochSeconds: number): string {
     const diffSeconds = Math.max(0, Math.floor(Date.now() / 1000 - epochSeconds));
     const units: [string, number][] = [
